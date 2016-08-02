@@ -1,0 +1,33 @@
+<?php
+/**
+ * @file
+ * Extension of Islandora Bookmark that allows for mass downloading of content.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_zip_download_menu() {
+  $items = array();
+  $items['admin/islandora/tools/islandora--zip-download'] = array(
+    'title' => 'Bookmark ZIP Download',
+    'description' => 'Configure settings for the Islandora ZIP download module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_zip_download_admin_form'),
+    'access arguments' => array('administer islandora_zip_download'),
+    'file' => 'includes/admin.form.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function islandora_zip_download_permission() {
+  return array(
+    'adminisiter islandora_zip_download' => array(
+      'title' => t('Adminisiter Islandora ZIP Download'),
+      'description' => t('Perform administration tasks for Islandora ZIP Download.'),
+    ),
+  );
+}
