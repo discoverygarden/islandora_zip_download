@@ -1,0 +1,8 @@
+name = Islandora ZIP Download Taxonomy
+core = 7.x
+package = Features
+dependencies[] = features
+dependencies[] = taxonomy
+features[features_api][] = api:2
+features[taxonomy][] = islandora_zip_download_mime_type_labels
+project path = sites/all/modules/islandora_zip_download/modules

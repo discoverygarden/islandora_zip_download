@@ -1,8 +1,8 @@
-# Islandora Example Module [![Build Status](https://travis-ci.org/Islandora/islandora_example_module.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_example_module)
+# Islandora ZIP Download
 
 ## Introduction
 
-A brief introduction and summary of the module.
+Provides an exporter for the Islandora Bookmark module which allows the user to export a hierarchial structure of collections, objects and their children in ZIP format.
 
 ## Requirements
 
@@ -10,9 +10,9 @@ This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
 * [Tuque](https://github.com/islandora/tuque)
-* Any
-* Additional
-* Requirements
+* [Islandora Solr](https://github.com/islandora/islandora_solr_search)
+* [Islandora Bookmark](https://github.com/islandora/islandora_bookmark)
+* [Islandora Job](https://github.com/discoverygarden/islandora_job)
 
 ## Installation
 
@@ -20,40 +20,30 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
-Set the paths for `example` and `module` in Administration » Islandora » MODULE (admin/islandora/module).
+Configure general bookmark settings in Administration » Islandora » Islandora Utility Modules » Islandora ZIP Download (admin/islandora/tools/islandora-zip-download).
 
-Include a screenshot of configuration page.
+NOTE: A field indexing all MIME types of a datastream is required if MIME type filtering is to be available through the UI.
 
 ## Troubleshooting/Issues
 
-Having problems or solved a problem? Check out the Islandora google groups for a solution.
-
-* [Islandora Group](https://groups.google.com/forum/?hl=en&fromgroups#!forum/islandora)
-* [Islandora Dev Group](https://groups.google.com/forum/?hl=en&fromgroups#!forum/islandora-dev)
-
-## FAQ
-
-Q. Is this normal?
-
-A. Yes. This is normal. Why ...
+Having problems or solved a problem? Contact [discoverygarden](http://support.discoverygarden.ca).
 
 ## Maintainers/Sponsors
 
 Current maintainers:
 
-* [Maintainer Name](https://github.com/maintainer_github)
-* [Another Maintainer](https://github.com/maintainer_github)
+* [discoverygarden](http://www.discoverygarden.ca)
 
-This project has been sponsored by:
+Sponsors:
 
-* Some really awesome sponsor
-A description of this really awesome sponsor
+* [Max Planck Institute for Psycholinguistics](http://www.mpi.nl/)
 
 ## Development
 
-If you would like to contribute to this module, please check out our helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the Islandora.ca site.
-
-Also include any Travis gotcha's here. 
+If you would like to contribute to this module, please check out our helpful
+[Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers)
+info, [Developers](http://islandora.ca/developers) section on Islandora.ca and
+contact [discoverygarden](http://support.discoverygarden.ca).
 
 ## License
 

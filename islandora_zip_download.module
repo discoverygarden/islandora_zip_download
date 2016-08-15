@@ -9,8 +9,8 @@
  */
 function islandora_zip_download_menu() {
   $items = array();
-  $items['admin/islandora/tools/islandora--zip-download'] = array(
-    'title' => 'Bookmark ZIP Download',
+  $items['admin/islandora/tools/islandora-zip-download'] = array(
+    'title' => 'Islandora ZIP Download',
     'description' => 'Configure settings for the Islandora ZIP download module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_zip_download_admin_form'),
@@ -30,4 +30,85 @@ function islandora_zip_download_permission() {
       'description' => t('Perform administration tasks for Islandora ZIP Download.'),
     ),
   );
+}
+
+/**
+ * Implements hook_islandora_bookmark_export_handler().
+ */
+function islandora_zip_download_islandora_bookmark_export_handler() {
+  return array(
+    t('ZIP Download') => array(
+      'ZIP' => 'islandora_zip_download_generate_manifest',
+    ),
+  );
+}
+
+/**
+ * Callback to generate a manifest for a ZIP.
+ *
+ * @param array $pids
+ *   An array of PIDs to export.
+ * @param array $form_state
+ *   The form state of the form where the export is being triggered.
+ */
+function islandora_zip_download_generate_manifest($pids, $form_state) {
+  // Get the selected MIME types to pass off from the UI. Note that the bookmark
+  // form uses #tree and the Solr results doesn't.
+  $mime_types = isset($form_state['values']['bookmarks']['fieldset']['file_types']) ? $form_state['values']['bookmarks']['fieldset']['file_types'] : $form_state['values']['file_types'];
+  $pids_to_filter = explode(', ', variable_get('islandora_zip_download_pids_to_exclude', ''));
+  $dsids_to_filter = explode(', ', variable_get('islandora_zip_downlaod_dsids_to_exclude', ''));
+  $pids_to_export = array_diff($pids, $pids_to_filter);
+  $mimes_to_export = array_diff($mime_types, explode(', ', variable_get('islandora_zip_download_mimes_to_exclude', '')));
+  if (empty($pids_to_export)) {
+    form_set_error('bookmarks][fieldset', t('No PIDs to export.'));
+  }
+  // XXX: This is where the manifest creation gets pushed out to Gearman. Pass
+  // on the PIDs, MIME types to filter and any DSID restrictions.
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ */
+function islandora_zip_download_form_islandora_bookmark_results_form_alter(&$form, &$form_state) {
+  islandora_zip_download_file_type_export_element($form, 'islandora_bookmark_export');
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ */
+function islandora_zip_download_form_islandora_bookmark_detailed_form_alter(&$form, &$form_state) {
+  islandora_zip_download_file_type_export_element($form, 'bookmarks');
+}
+
+/**
+ * Helper to return the file type export for a form.
+ *
+ * @param array $form
+ *   The form for the element to be inserted into.
+ * @param string $parent_element
+ *   The ID of the parent element where the element will be inserted. Also used
+ *   for the states selector.
+ */
+function islandora_zip_download_file_type_export_element(&$form, $parent_element) {
+  module_load_include('inc', 'islandora_zip_download', 'includes/utilities');
+  $options = islandora_zip_download_mimetypes_to_export();
+  if ($options) {
+    $form[$parent_element]['fieldset']['file_types'] = array(
+      '#type' => 'select',
+      '#title' => t('File types'),
+      '#description' => t('Select the types of MIMEs to be included in the ZIP. If none are selected all types will be included.'),
+      '#multiple' => TRUE,
+      '#options' => $options,
+      '#weight' => 4.1,
+      '#states' => array(
+        'visible' => array(
+          array(
+            array(":input[name='bookmarks[fieldset][export_options]']" => array('value' => 'ZIP')),
+            'or',
+            array(":input[name='export_options']" => array('value' => 'ZIP')),
+          ),
+        ),
+      ),
+    );
+  }
 }
