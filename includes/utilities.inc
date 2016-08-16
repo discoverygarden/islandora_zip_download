@@ -17,7 +17,9 @@ function islandora_zip_download_mimetypes_to_export() {
   if ($mimes) {
     // Grab any human-readable variables and replace them as the values.
     $human_readable = islandora_zip_download_taxonomy_human_readable_mimetypes();
-    return array_replace($mimes, $human_readable);
+    $replaced_array = array_replace($mimes, $human_readable);
+    asort($replaced_array);
+    return $replaced_array;
   }
   return FALSE;
 }
