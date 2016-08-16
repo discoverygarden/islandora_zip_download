@@ -11,8 +11,9 @@
  *   Whether this is being used for a UI table output.
  *
  * @return array
- *   An associate array listing human readable labels for MIME types where the
- *   key is the MIME type and the value is the label.
+ *   Either an array of arrays containing the MIME type name and label for use
+ *   in a row through the UI or an associative array where the key is the MIME
+ *   type and the value is the human-readable label.
  */
 function islandora_zip_download_taxonomy_human_readable_mimetypes($table_output = FALSE) {
   $vocabulary = taxonomy_vocabulary_machine_name_load('islandora_zip_download_mime_type_labels');

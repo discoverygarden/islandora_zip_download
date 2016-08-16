@@ -1,6 +1,6 @@
 name = Islandora ZIP Download Taxonomy
 core = 7.x
-package = Features
+package = Islandora Tools
 dependencies[] = features
 dependencies[] = taxonomy
 features[features_api][] = api:2

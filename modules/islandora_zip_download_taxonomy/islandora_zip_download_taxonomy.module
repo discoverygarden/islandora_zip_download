@@ -25,6 +25,7 @@ function islandora_zip_download_taxonomy_menu() {
     'page callback' => 'islandora_zip_download_mime_type_autocomplete',
     'page arguments' => array(3),
     'access arguments' => array("edit terms in $vid"),
+    'load arguments' => array('%map', '%index'),
     'type' => MENU_CALLBACK,
   );
   return $items;
@@ -46,19 +47,10 @@ function islandora_zip_download_form_taxonomy_form_term_alter(&$form, $form_stat
  * @param string $term
  *   The MIME type being searched for.
  *
- * @return array
+ * @return string
  *   Terms to be autocompleted.
  */
 function islandora_zip_download_mime_type_autocomplete($term) {
-  $qp = new IslandoraSolrQueryProcessor();
-  $field = variable_get('islandora_zip_download_mimetype_solr_field', 'fedora_datastreams_mimetypes_ms');
-  $qp->buildQuery('*:*');
-  $qp->solrParams['fl'] = 'PID';
-  $qp->solrLimit = 1;
-  $qp->solrParams['facet'] = 'true';
-  $qp->solrParams['facet.field'] = $field;
-  $qp->solrParams['facet.mincount'] = 1;
-  $qp->solrParams['facet.prefix'] = $term;
-  $qp->executeQuery(FALSE);
-  return drupal_json_output(drupal_map_assoc(array_keys($qp->islandoraSolrResult['facet_counts']['facet_fields'][$field])));
+  module_load_include('inc', 'islandora_zip_download', 'includes/utilities');
+  return drupal_json_output(islandora_zip_download_mimetypes_in_use($term));
 }

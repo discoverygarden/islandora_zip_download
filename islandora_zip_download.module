@@ -99,6 +99,7 @@ function islandora_zip_download_file_type_export_element(&$form, $parent_element
       '#description' => t('Select the types of MIMEs to be included in the ZIP. If none are selected all types will be included.'),
       '#multiple' => TRUE,
       '#options' => $options,
+      // Using 4.1 to place this directly under the existing Bookmark select.
       '#weight' => 4.1,
       '#states' => array(
         'visible' => array(
