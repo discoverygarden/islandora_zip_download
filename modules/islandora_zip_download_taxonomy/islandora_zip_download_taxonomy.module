@@ -1,0 +1,56 @@
+<?php
+/**
+ * @file
+ * Holds a form alter for the ZIP Download taxonomy module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_zip_download_taxonomy_menu() {
+  $items = array();
+  // XXX: Taxonomy creates permissions based upon vocabulary ID. Can't be
+  // hardcoded so need to grab our VID and use it here.
+  $vid = db_select('taxonomy_vocabulary', 't')
+    ->condition('machine_name', 'islandora_zip_download_taxonomy')
+    ->fields('t', array('vid'))
+    ->execute()
+    ->fetchField();
+  // We use %menu_tail to get around some of the issues that can arise with
+  // users entering input for autocomplete. For example slashes would break.
+  // Relevant Drupal thread: http://drupal.org/node/93854#comment-6164592.
+  $items['islandora/zip-download/autocomplete/%menu_tail'] = array(
+    'title' => 'Autocomplete callback',
+    'description' => 'Autocomplete MIME Types.',
+    'page callback' => 'islandora_zip_download_mime_type_autocomplete',
+    'page arguments' => array(3),
+    'access arguments' => array("edit terms in $vid"),
+    'load arguments' => array('%map', '%index'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ */
+function islandora_zip_download_form_taxonomy_form_term_alter(&$form, $form_state) {
+  // Only alter on our vocabulary.
+  if ($form_state['term']->vocabulary_machine_name == 'islandora_zip_download_mime_type_labels') {
+    $form['name']['#autocomplete_path'] = 'islandora/zip-download/autocomplete';
+  }
+}
+
+/**
+ * Autocomplete callback for MIME type completion.
+ *
+ * @param string $term
+ *   The MIME type being searched for.
+ *
+ * @return string
+ *   Terms to be autocompleted.
+ */
+function islandora_zip_download_mime_type_autocomplete($term) {
+  module_load_include('inc', 'islandora_zip_download', 'includes/utilities');
+  return drupal_json_output(islandora_zip_download_mimetypes_in_use($term));
+}

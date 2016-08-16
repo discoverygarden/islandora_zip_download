@@ -1,0 +1,18 @@
+<?php
+/**
+ * @file
+ * Contains install related hooks for the ZIP Download module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_zip_download_uninstall() {
+  $variables = array(
+    'islandora_zip_download_mimetype_solr_field',
+    'islandora_zip_download_pids_to_exclude',
+    'islandora_zip_download_dsids_to_exclude',
+    'islandora_zip_download_mimes_to_exclude',
+  );
+  array_walk($variables, 'variable_del');
+}

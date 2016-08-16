@@ -1,0 +1,9 @@
+name = Islandora Bookmark ZIP Download
+description = "Allow the creation of ZIPs containing objects and their datastreams."
+package = Islandora Tools
+core = 7.x
+configure = admin/islandora/tools/islandora-bookmark-zip-download
+dependencies[] = islandora
+dependencies[] = islandora_bookmark
+dependenices[] = islandora_solr
+dependencies[] = islandora_zip_download_taxonomy
