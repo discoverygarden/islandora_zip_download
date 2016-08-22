@@ -132,6 +132,9 @@ function islandora_zip_download_file_type_export_element(&$form, $parent_element
   }
 }
 
+/**
+ * Implements hook_islandora_job_register_jobs().
+ */
 function islandora_zip_download_islandora_job_register_jobs() {
   $job = array();
 

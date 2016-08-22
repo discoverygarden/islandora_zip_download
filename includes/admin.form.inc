@@ -61,7 +61,7 @@ function islandora_zip_download_admin_form($form, $form_state) {
       '#type' => 'radios',
       '#title' => t('Units'),
       '#description' => t('The units given for the following measurements.'),
-      '#default_value'=> $size_defaults['scale'],
+      '#default_value' => $size_defaults['scale'],
       '#options' => array(
         0 => t('bytes'),
         10 => t('kibibytes'),
