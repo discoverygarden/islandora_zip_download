@@ -24,26 +24,87 @@ function islandora_zip_download_admin_form($form, $form_state) {
   $form['config']['general_configuration'] = array(
     '#type' => 'fieldset',
     '#title' => t('General Configuration'),
-    'mimetype_solr_field' => array(
+    'islandora_zip_download_mimetype_solr_field' => array(
       '#type' => 'textfield',
       '#title' => t('MIME type Solr field'),
       '#required' => TRUE,
       '#default_value' => variable_get('islandora_zip_download_mimetype_solr_field', 'fedora_datastreams_mimetypes_ms'),
     ),
-    'pids_to_exclude' => array(
+    'islandora_zip_download_pids_to_exclude' => array(
       '#type' => 'textarea',
       '#title' => t('PIDs to exclude (comma separated)'),
       '#default_value' => variable_get('islandora_zip_download_pids_to_exclude', ''),
     ),
-    'dsids_to_exclude' => array(
+    'islandora_zip_download_dsids_to_exclude' => array(
       '#type' => 'textarea',
       '#title' => t('Datastream IDs to exclude (comma separated)'),
       '#default_value' => variable_get('islandora_zip_download_dsids_to_exclude', ''),
     ),
-    'mimetypes_to_exclude' => array(
+    'islandora_zip_download_mimes_to_exclude' => array(
       '#type' => 'textarea',
       '#title' => t('MIME Types to exclude (comma separated)'),
       '#default_value' => variable_get('islandora_zip_download_mimes_to_exclude', ''),
+    ),
+  );
+  $size_defaults = variable_get('islandora_zip_download_size_limits', array(
+    'scale' => 30,
+    'source_limit' => 0,
+    'export_limit' => 0,
+    'split_size' => 0,
+    'split_executable' => 'split',
+  ));
+  $form['config']['islandora_zip_download_size_limits'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Size Limits'),
+    '#tree' => TRUE,
+    'scale' => array(
+      '#type' => 'radios',
+      '#title' => t('Units'),
+      '#description' => t('The units given for the following measurements.'),
+      '#default_value'=> $size_defaults['scale'],
+      '#options' => array(
+        0 => t('bytes'),
+        10 => t('kibibytes'),
+        20 => t('mebibytes'),
+        30 => t('gibibytes'),
+      ),
+    ),
+    'source_limit' => array(
+      '#type' => 'textfield',
+      '#title' => t('Source limit'),
+      '#description' => t('The size of the source threshold size. 0 or negative to disable.'),
+      '#element_validate' => array(
+        'element_validate_number',
+      ),
+      '#required' => TRUE,
+      '#default_value' => $size_defaults['source_limit'],
+    ),
+    'export_limit' => array(
+      '#type' => 'textfield',
+      '#title' => t('Export limit'),
+      '#description' => t('The size of the archive threshold size. 0 or negative to disable.'),
+      '#element_validate' => array(
+        'element_validate_number',
+      ),
+      '#required' => TRUE,
+      '#default_value' => $size_defaults['export_limit'],
+    ),
+    'split_size' => array(
+      '#type' => 'textfield',
+      '#title' => t('Split size'),
+      '#description' => t('The archive will be split into files no larger than the size specified. 0 or negative to disable.'),
+      '#element_validate' => array(
+        'element_validate_number',
+      ),
+      '#required' => TRUE,
+      '#default_value' => $size_defaults['split_size'],
+    ),
+    'split_executable' => array(
+      '#type' => 'textfield',
+      '#title' => t('Split executable'),
+      '#description' => t('Path to the split executable'),
+      '#required' => TRUE,
+      '#default_value' => $size_defaults['split_executable'],
     ),
   );
   $form['config']['file_type_labels'] = array(
@@ -58,24 +119,6 @@ function islandora_zip_download_admin_form($form, $form_state) {
       )),
     ),
   );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-  return $form;
-}
-
-/**
- * Submit handler for the general configuration form.
- *
- * @param array $form
- *   The Drupal form definition.
- * @param array $form_state
- *   The Drupal form state.
- */
-function islandora_zip_download_admin_form_submit($form, $form_state) {
-  variable_set('islandora_zip_download_mimetype_solr_field', $form_state['values']['mimetype_solr_field']);
-  variable_set('islandora_zip_download_pids_to_exclude', $form_state['values']['pids_to_exclude']);
-  variable_set('islandora_zip_download_dsids_to_exclude', $form_state['values']['dsids_to_exclude']);
-  variable_set('islandora_zip_download_mimes_to_exclude', $form_state['values']['mimetypes_to_exclude']);
+  $form['#submit'][] = 'islandora_zip_download_admin_form_submit';
+  return system_settings_form($form);
 }
