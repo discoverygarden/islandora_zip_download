@@ -62,6 +62,7 @@ function islandora_zip_download_admin_form($form, $form_state) {
       '#title' => t('Units'),
       '#description' => t('The units given for the following measurements.'),
       '#default_value' => $size_defaults['scale'],
+      '#required' => TRUE,
       '#options' => array(
         0 => t('bytes'),
         10 => t('kibibytes'),
@@ -119,6 +120,5 @@ function islandora_zip_download_admin_form($form, $form_state) {
       )),
     ),
   );
-  $form['#submit'][] = 'islandora_zip_download_admin_form_submit';
   return system_settings_form($form);
 }

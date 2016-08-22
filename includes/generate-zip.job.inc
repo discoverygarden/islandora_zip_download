@@ -61,7 +61,8 @@ function islandora_zip_download_generate_zip($info) {
   global $user;
   $user = user_load($info['user_id']);
 
-  $zip_file = drupal_tempnam('temporary://', 'islandora_zip_download');
+  $zip_file_uri = file_create_filename('islandora_zip_download', 'temporary://');
+  $zip_file_path = drupal_realpath($zip_file_uri);
   $zip = new ZipArchive();
   $stats = array(
     'count' => 0,
@@ -76,29 +77,30 @@ function islandora_zip_download_generate_zip($info) {
     'source_limit' => 0,
     'export_limit' => 0,
     'split_size' => 0,
+    'split_executable' => 'split',
   ));
   $map_to_gib = function ($num) use ($base_limits) {
     return $num * (1 << $base_limits['scale']);
   };
-  $size_limits = array_map($map_to_scale, $base_limits);
+  $size_limits = array_map($map_to_gib, $base_limits);
 
   $check_stats = function () use (&$stats, $size_limits) {
     // Throw exceptions if we meet or exceed any limits.
     if ($size_limits['source_limit'] > 0 && $stats['size']['source'] >= $size_limits['source_limit']) {
       throw new IslandoraZipDownloadSourceLimitException($stats['size']['source'], $size_limits['source_limit']);
     }
-    elseif ($size_limits['export_limit'] > 0 && $stats['size']['compressed'] >= $size_limits['export_limit'])) {
+    elseif ($size_limits['export_limit'] > 0 && $stats['size']['compressed'] >= $size_limits['export_limit']) {
       throw new IslandoraZipDownloadExportLimitException($stats['size']['compressed'], $size_limits['export_limit']);
     }
   };
 
-  $write_file_to_zip = function ($actual_file, $destination_name = NULL) use ($zip, $zip_file, &$stats, $check_stats) {
-    $zip->open($zip_file);
-    $zip->addFile($actual_file, $destination_name);
+  $write_file_to_zip = function ($actual_file, $destination_name = NULL) use ($zip, $zip_file_path, &$stats, $check_stats) {
+    $zip->open($zip_file_path, ZipArchive::CREATE);
+    $zip->addFile(drupal_realpath($actual_file), $destination_name);
     $zip->close();
     $stats['count'] += 1;
-    $stats['size']['source'] += filesize($actual_file);
-    $stats['size']['compressed'] = filesize($zip_file);
+    $stats['size']['source'] += filesize(drupal_realpath($actual_file));
+    $stats['size']['compressed'] = filesize($zip_file_path);
     $check_stats();
   };
   $datastream_filename = function (AbstractDatastream $datastream) {
@@ -122,7 +124,7 @@ function islandora_zip_download_generate_zip($info) {
   };
   $write_datastream_to_zip = function (AbstractDatastream $datastream, $dir) use ($write_file_to_zip, $datastream_filename) {
     try {
-      $tempfile = drupal_tempnam('temporary://', 'islandora_zip_download_ds');
+      $tempfile = drupal_tempnam('temporary://', 'islandora_zip_download.zip');
       $datastream->getContent($tempfile);
       $filename = $datastream_filename($datastream);
       $write_file_to_zip($tempfile, "$dir/$filename");
@@ -136,14 +138,16 @@ function islandora_zip_download_generate_zip($info) {
     $mime = $datastream->mimetype;
 
     return !in_array($id, $info['dsids']['exclude']) && (
-        empty($info['mimes']['all']) || in_array($datastream->mimetype, $info['mimes']['filtered']))
+        empty($info['mimes']['all']) || in_array($datastream->mimetype, $info['mimes']['filtered']));
   };
   $iterator = new RecursiveIteratorIterator(new IslandoraZipDownloadZipIterator($info['pids']['filtered'], $info['pids']['exclude']), RecursiveIteratorIterator::SELF_FIRST);
 
   try {
     foreach ($iterator as $pid) {
       try {
+        drush_log(t('Loading @pid.', array('@pid' => $pid)));
         $object = islandora_object_load($pid);
+        drush_log(t('Loaded @pid.', array('@pid' => $pid)));
       }
       catch (RepositoryException $e) {
         watchdog_exception('islandora_zip_download', $e, 'Failed to load @pid.', array('@pid' => $pid), WATCHDOG_WARNING);
@@ -153,6 +157,10 @@ function islandora_zip_download_generate_zip($info) {
       foreach ($object as $datastream) {
         try {
           if (!$unfiltered($datastream)) {
+            drush_log(t('Skipping @pid/@dsid.', array(
+              '@pid' => $pid,
+              '@dsid' => $datastream->id,
+            )));
             continue;
           }
         }
@@ -187,6 +195,7 @@ function islandora_zip_download_generate_zip($info) {
   }
   catch (IslandoraZipDownloadLimitException $e) {
     // Ended due to hitting limit.
+    drush_log(t('Reached a limit...'));
   }
 
   if ($stats['count'] === 0) {
@@ -201,16 +210,17 @@ function islandora_zip_download_generate_zip($info) {
       $real_dir = drupal_realpath($directory);
       $prefix = 'zip';
       $command_components = array(
-        $size_limits['split_executable'],
-        "--bytes={$split_size}"
+        $base_limits['split_executable'],
+        "--bytes={$split_size}",
         '--numeric-suffixes',
         '--suffix-length=4',
         '--unbuffered',
         "--filter='basename \$FILE'",
-        drupal_realpath($zip_file),
+        $zip_file_path,
         "$real_dir/$prefix",
       );
       $split = array();
+      drush_log(implode(' ', $command_components));
       exec(implode(' ', $command_components), $split);
       $map_to_uri = function ($basename) use ($directory) {
         return "$directory/$basename";
@@ -219,28 +229,28 @@ function islandora_zip_download_generate_zip($info) {
       $uris = array_map($map_to_uri, $split);
       $reassembly_bat = "$directory/reassemble.bat";
       $output = 'download.zip';
-      file_put_contents($reassembly_bat, array(
+      file_put_contents($reassembly_bat, implode("\r\n", array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('copy /b !files !output', array(
           '!files' => implode('+', $split),
           '!output' => $output,
         )),
-      ));
+      )));
       $reassembly_sh = "$directory/reassemble.sh";
-      file_put_contents($reassembly_sh, array(
+      file_put_contents($reassembly_sh, implode("\n", array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('cat !prefix* !output', array(
           '!prefix' => $prefix,
           '!output' => $output,
         )),
-      );
+      )));
       $uris[] = $reassembly_bat;
       $uris[] = $reassembly_sh;
     }
     else {
-      $uris = array(file_unmanaged_move($zip_file));
+      $uris = array(file_unmanaged_move($zip_file_uri));
     }
     rules_invoke_event('islandora_zip_download_zip_generated', $info, $stats, $base_limits, $uris);
   }
@@ -268,8 +278,8 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    *   or NULL if we are the initial/root iterator.
    */
   public function __construct($start, &$exclude = array(), $parent = NULL) {
-    $this->start = $start;
-    $this->total = count($start);
+    $this->start = array_values($start);
+    $this->total = count($this->start);
     $this->backend = 'solr';
     $this->parent = $parent;
     if ($parent === NULL) {
@@ -290,7 +300,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
   protected function getChildrenQuery() {
     $qp = new IslandoraSolrQueryProcessor();
     $qp->buildQuery('*:*');
-    $base = array(
+    $fields = array(
       variable_get('islandora_solr_member_of_field', 'RELS_EXT_isMemberOf_uri_ms'),
       variable_get('islandora_solr_member_of_collection_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
       variable_get('islandora_compound_object_relationship', 'isConstituentOf'),
@@ -358,7 +368,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
   public function hasChildren() {
     // Test if $this->current() has children.
     if ($this->backend == 'solr') {
-      $qp = $this->getChildrenQuery()
+      $qp = $this->getChildrenQuery();
       $qp->solrLimit = 0;
       $qp->executeQuery();
       return $qp->islandoraSolrResult['response']['numFound'] > 0;
@@ -370,11 +380,11 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    */
   protected function lowerGetChildren() {
     if ($this->backend == 'solr') {
-      $qp = $this->getChildrenQuery()
+      $qp = $this->getChildrenQuery();
       // Arbitrarily large.
       $qp->solrLimit = 1000000;
       $qp->solrParams['fl'] = 'PID';
-      $qp->solrParams['facet'] = FALSE;
+      $qp->solrParams['facet'] = 'false';
       $qp->executeQuery();
       $map_to_pids = function ($doc) {
         return $doc['PID'];
@@ -403,6 +413,13 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    */
   public function current() {
     return $this->start[$this->offset];
+  }
+
+  /**
+   * Inherits.
+   */
+  public function key() {
+    return $this->current();
   }
 
   /**
