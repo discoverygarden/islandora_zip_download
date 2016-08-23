@@ -222,7 +222,7 @@ function islandora_zip_download_generate_zip($info) {
       $split = glob($dir_prefix . '*');
       $uris = array_map($map_to_uri, $split);
       $output = 'download.zip';
-      $array_to_string = function (array $input, $eol="\n") {
+      $array_to_string = function (array $input, $eol = "\n") {
         return implode($eol, $input) . $eol;
       };
       $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
