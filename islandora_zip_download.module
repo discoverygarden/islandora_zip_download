@@ -72,6 +72,7 @@ function islandora_zip_download_generate_manifest($pids, $form_state) {
   // on the PIDs, MIME types to filter and any DSID restrictions.
   islandora_job_submit_background('islandora_zip_download_generate_zip', array(
     'user_id' => $user->uid,
+    'accessed_base_url' => $GLOBALS['base_url'],
     'mimes' => array(
       'all' => $mime_types,
       'exclude' => $mimes_to_filter,
@@ -149,4 +150,12 @@ function islandora_zip_download_islandora_job_register_jobs() {
   );
 
   return $job;
+}
+
+/**
+ * Rules getter callback; interpret integer as a filesize.
+ */
+function islandora_zip_download_rules_file_size_to_human_readable($data, array $options, $name, $type, $info) {
+  module_load_include('inc', 'islandora', 'includes/utilites');
+  return islandora_convert_bytes_to_human_readable($data);
 }

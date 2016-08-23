@@ -60,6 +60,7 @@ function islandora_zip_download_generate_zip($info) {
   // the user should not have access.
   global $user;
   $user = user_load($info['user_id']);
+  drupal_static_reset('islandora_get_tuque_connection');
 
   $zip_file_uri = file_create_filename('islandora_zip_download', 'temporary://');
   $zip_file_path = drupal_realpath($zip_file_uri);
@@ -83,6 +84,7 @@ function islandora_zip_download_generate_zip($info) {
     return $num * (1 << $base_limits['scale']);
   };
   $size_limits = array_map($map_to_gib, $base_limits);
+  $size_constrained = FALSE;
 
   $check_stats = function () use (&$stats, $size_limits) {
     // Throw exceptions if we meet or exceed any limits.
@@ -145,9 +147,7 @@ function islandora_zip_download_generate_zip($info) {
   try {
     foreach ($iterator as $pid) {
       try {
-        drush_log(t('Loading @pid.', array('@pid' => $pid)));
         $object = islandora_object_load($pid);
-        drush_log(t('Loaded @pid.', array('@pid' => $pid)));
       }
       catch (RepositoryException $e) {
         watchdog_exception('islandora_zip_download', $e, 'Failed to load @pid.', array('@pid' => $pid), WATCHDOG_WARNING);
@@ -157,10 +157,6 @@ function islandora_zip_download_generate_zip($info) {
       foreach ($object as $datastream) {
         try {
           if (!$unfiltered($datastream)) {
-            drush_log(t('Skipping @pid/@dsid.', array(
-              '@pid' => $pid,
-              '@dsid' => $datastream->id,
-            )));
             continue;
           }
         }
@@ -194,8 +190,8 @@ function islandora_zip_download_generate_zip($info) {
     }
   }
   catch (IslandoraZipDownloadLimitException $e) {
-    // Ended due to hitting limit.
-    drush_log(t('Reached a limit...'));
+    $size_constrained = TRUE;
+    watchdog_exception('islandora_zip_download', $e, 'Hit size limit generating ZIP file. Generation parameters: @params', array('@params' => print_r($info, TRUE)), WATCHDOG_NOTICE);
   }
 
   if ($stats['count'] === 0) {
@@ -209,50 +205,74 @@ function islandora_zip_download_generate_zip($info) {
       file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
       $real_dir = drupal_realpath($directory);
       $prefix = 'zip';
+      $dir_prefix = "$real_dir/$prefix";
       $command_components = array(
         $base_limits['split_executable'],
         "--bytes={$split_size}",
         '--numeric-suffixes',
         '--suffix-length=4',
-        '--unbuffered',
-        "--filter='basename \$FILE'",
         $zip_file_path,
-        "$real_dir/$prefix",
+        $dir_prefix,
       );
-      $split = array();
-      drush_log(implode(' ', $command_components));
-      exec(implode(' ', $command_components), $split);
-      $map_to_uri = function ($basename) use ($directory) {
+      exec(implode(' ', $command_components));
+      $map_to_uri = function ($filename) use ($directory) {
+        $basename = basename($filename);
         return "$directory/$basename";
       };
-      $split = array_filter($split);
+      $split = glob($dir_prefix . '*');
       $uris = array_map($map_to_uri, $split);
-      $reassembly_bat = "$directory/reassemble.bat";
       $output = 'download.zip';
-      file_put_contents($reassembly_bat, implode("\r\n", array(
+      $array_to_string = function (array $input, $eol="\n") {
+        return implode($eol, $input) . $eol;
+      };
+      $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('copy /b !files !output', array(
           '!files' => implode('+', $split),
           '!output' => $output,
         )),
-      )));
-      $reassembly_sh = "$directory/reassemble.sh";
-      file_put_contents($reassembly_sh, implode("\n", array(
+      ), "\r\n"), "$directory/reassemble.bat");
+      $reassembly_sh = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
-        format_string('cat !prefix* !output', array(
+        format_string('cat !prefix* > !output', array(
           '!prefix' => $prefix,
           '!output' => $output,
         )),
-      )));
+      )), "$directory/reassemble.sh");
       $uris[] = $reassembly_bat;
       $uris[] = $reassembly_sh;
     }
     else {
       $uris = array(file_unmanaged_move($zip_file_uri));
     }
-    rules_invoke_event('islandora_zip_download_zip_generated', $info, $stats, $base_limits, $uris);
+    $map_uri_to_md5line = function ($uri) {
+      return format_string('!hash *!file', array(
+        '!hash' => md5_file($uri),
+        '!file' => drupal_basename($uri),
+      ));
+    };
+    $map_uri_to_sha1line = function ($uri) {
+      return format_string('!hash *!file', array(
+        '!hash' => sha1_file($uri),
+        '!file' => drupal_basename($uri),
+      ));
+    };
+
+    // XXX: Swap out Drupal's base URL, so any URLs we might generate should
+    // be accessible.
+    $old_base = $GLOBALS['base_url'];
+    $GLOBALS['base_url'] = $info['accessed_base_url'];
+    $urls = array_map('file_create_url', $uris);
+    $meta_urls = array_map('file_create_url', array(
+      'file_list' => file_unmanaged_save_data($array_to_string($urls), "$directory/files.txt"),
+      'md5' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris)), "$directory/md5.txt"),
+      'sha1' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_sha1line, $uris)), "$directory/sha1.txt"),
+    ));
+
+    rules_invoke_event('islandora_zip_download_zip_generated', $info, $stats, $urls, $meta_urls, $size_constrained);
+    $GLOBALS['old_base_url'] = $old_base;
   }
 }
 
