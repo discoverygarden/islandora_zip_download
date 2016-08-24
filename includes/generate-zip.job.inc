@@ -62,7 +62,15 @@ function islandora_zip_download_generate_zip($info) {
   $user = user_load($info['user_id']);
   drupal_static_reset('islandora_get_tuque_connection');
 
-  $zip_file_uri = file_create_filename('islandora_zip_download', 'temporary://');
+  $directory = file_default_scheme() . '://islandora_zip_download/' . uuid_generate();
+  file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+  db_insert('islandora_zip_download_tracking')
+    ->fields(array(
+      'path' => $directory,
+      'created' => time(),
+    ))
+    ->execute();
+  $zip_file_uri = file_create_filename('download.zip', $directory);
   $zip_file_path = drupal_realpath($zip_file_uri);
   $zip = new ZipArchive();
   $stats = array(
@@ -126,7 +134,7 @@ function islandora_zip_download_generate_zip($info) {
   };
   $write_datastream_to_zip = function (AbstractDatastream $datastream, $dir) use ($write_file_to_zip, $datastream_filename) {
     try {
-      $tempfile = drupal_tempnam('temporary://', 'islandora_zip_download.zip');
+      $tempfile = drupal_tempnam('temporary://', 'islandora_zip_download');
       $datastream->getContent($tempfile);
       $filename = $datastream_filename($datastream);
       $write_file_to_zip($tempfile, "$dir/$filename");
@@ -199,10 +207,9 @@ function islandora_zip_download_generate_zip($info) {
   }
   else {
     $split_size = $size_limits['split_size'];
-    if ($split_size > 0 && $stats['size']['compressed'] > $split_size) {
+    $split = $split_size > 0 && $stats['size']['compressed'] > $split_size;
+    if ($split) {
       module_load_include('inc', 'uuid');
-      $directory = file_default_scheme() . '://islandora_zip_download/' . uuid_generate();
-      file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
       $real_dir = drupal_realpath($directory);
       $prefix = 'zip';
       $dir_prefix = "$real_dir/$prefix";
@@ -219,13 +226,13 @@ function islandora_zip_download_generate_zip($info) {
         $basename = basename($filename);
         return "$directory/$basename";
       };
-      $split = glob($dir_prefix . '*');
-      $uris = array_map($map_to_uri, $split);
+      $parts = glob($dir_prefix . '*');
+      $uris = array_map($map_to_uri, $parts);
       $output = 'download.zip';
       $array_to_string = function (array $input, $eol = "\n") {
         return implode($eol, $input) . $eol;
       };
-      $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
+      $uris[] = $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('copy /b !files !output', array(
@@ -233,7 +240,7 @@ function islandora_zip_download_generate_zip($info) {
           '!output' => $output,
         )),
       ), "\r\n"), "$directory/reassemble.bat");
-      $reassembly_sh = file_unmanaged_save_data($array_to_string(array(
+      $uris[] = $reassembly_sh = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('cat !prefix* > !output', array(
@@ -241,11 +248,9 @@ function islandora_zip_download_generate_zip($info) {
           '!output' => $output,
         )),
       )), "$directory/reassemble.sh");
-      $uris[] = $reassembly_bat;
-      $uris[] = $reassembly_sh;
     }
     else {
-      $uris = array(file_unmanaged_move($zip_file_uri));
+      $uris = array($zip_file_uri);
     }
     $map_uri_to_md5line = function ($uri) {
       return format_string('!hash *!file', array(
@@ -265,13 +270,21 @@ function islandora_zip_download_generate_zip($info) {
     $old_base = $GLOBALS['base_url'];
     $GLOBALS['base_url'] = $info['accessed_base_url'];
     $urls = array_map('file_create_url', $uris);
+    $uris_and_download = $split ? array_merge($uris, array($zip_file_uri)) : $uris;
     $meta_urls = array_map('file_create_url', array(
       'file_list' => file_unmanaged_save_data($array_to_string($urls), "$directory/files.txt"),
-      'md5' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris)), "$directory/md5.txt"),
-      'sha1' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_sha1line, $uris)), "$directory/sha1.txt"),
+      'md5' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris_and_download)), "$directory/md5.txt"),
+      'sha1' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_sha1line, $uris_and_download)), "$directory/sha1.txt"),
     ));
+    if ($split) {
+      drupal_unlink($zip_file_uri);
+    }
 
     rules_invoke_event('islandora_zip_download_zip_generated', $info, $stats, $urls, $meta_urls, $size_constrained);
+    db_update('islandora_zip_download_tracking')
+      ->fields(array('expiry' => time() + (variable_get('islandora_zip_download_ttl', 48) * 3600)))
+      ->condition('path', $directory);
+      ->execute();
     $GLOBALS['old_base_url'] = $old_base;
   }
 }

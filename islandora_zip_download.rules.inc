@@ -15,7 +15,7 @@ function islandora_zip_download_rules_event_info() {
     'variables' => array(
       'stats' => array(
         'label' => t('Generation stats'),
-        'description' => t('Datastream count and file size information.')
+        'description' => t('Datastream count and file size information.'),
         'type' => 'islandora_zip_download_generation_stats',
       ),
       'paths' => array(

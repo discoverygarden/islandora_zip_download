@@ -45,6 +45,12 @@ function islandora_zip_download_admin_form($form, $form_state) {
       '#title' => t('MIME Types to exclude (comma separated)'),
       '#default_value' => variable_get('islandora_zip_download_mimes_to_exclude', ''),
     ),
+    'islandora_zip_download_ttl' => array(
+      '#type' => 'textfield',
+      '#title' => t('ZIP Time-to-Live'),
+      '#description' => t('The number of hours for which the generated files will be kept; after this time, they will be eligible for deletion.'),
+      '#default_value' => variable_get('islandora_zip_download_ttl', 48),
+    ),
   );
   $size_defaults = variable_get('islandora_zip_download_size_limits', array(
     'scale' => 30,
