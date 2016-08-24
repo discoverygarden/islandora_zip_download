@@ -283,7 +283,7 @@ function islandora_zip_download_generate_zip($info) {
     rules_invoke_event('islandora_zip_download_zip_generated', $info, $stats, $urls, $meta_urls, $size_constrained);
     db_update('islandora_zip_download_tracking')
       ->fields(array('expiry' => time() + (variable_get('islandora_zip_download_ttl', 48) * 3600)))
-      ->condition('path', $directory);
+      ->condition('path', $directory)
       ->execute();
     $GLOBALS['old_base_url'] = $old_base;
   }
