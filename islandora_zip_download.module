@@ -48,10 +48,12 @@ function islandora_zip_download_islandora_bookmark_export_handler() {
  *
  * @param array $pids
  *   An array of PIDs to export.
+ * @param NULL|string $style
+ *   The style to be used for exporting, or NULL if not defined.
  * @param array $form_state
  *   The form state of the form where the export is being triggered.
  */
-function islandora_zip_download_generate_manifest($pids, $form_state) {
+function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
   global $user;
   // Get the selected MIME types to pass off from the UI. Note that the bookmark
   // form uses #tree and the Solr results doesn't.
