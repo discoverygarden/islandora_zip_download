@@ -201,6 +201,10 @@ function islandora_zip_download_generate_zip($info) {
     $size_constrained = TRUE;
     watchdog_exception('islandora_zip_download', $e, 'Hit size limit generating ZIP file. Generation parameters: @params', array('@params' => print_r($info, TRUE)), WATCHDOG_NOTICE);
   }
+  
+  $array_to_string = function (array $input, $eol = "\n") {
+    return implode($eol, $input) . $eol;
+  };
 
   if ($stats['count'] === 0) {
     rules_invoke_event('islandora_zip_download_zip_empty', $info);
@@ -229,9 +233,6 @@ function islandora_zip_download_generate_zip($info) {
       $parts = glob($dir_prefix . '*');
       $uris = array_map($map_to_uri, $parts);
       $output = 'download.zip';
-      $array_to_string = function (array $input, $eol = "\n") {
-        return implode($eol, $input) . $eol;
-      };
       $uris[] = $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
