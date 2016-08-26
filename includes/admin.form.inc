@@ -77,8 +77,8 @@ function islandora_zip_download_admin_form($form, $form_state) {
     ),
     'source_limit' => array(
       '#type' => 'textfield',
-      '#title' => t('Source limit'),
-      '#description' => t('The size of the source threshold size. 0 or negative to disable.'),
+      '#title' => t('Total datastream/source size limit'),
+      '#description' => t('The total summed size of the datastreams in a given download set will be less than this size. 0 or negative to disable.'),
       '#element_validate' => array(
         'element_validate_number',
       ),
@@ -88,7 +88,7 @@ function islandora_zip_download_admin_form($form, $form_state) {
     'split_size' => array(
       '#type' => 'textfield',
       '#title' => t('Split size'),
-      '#description' => t('The archive will be split into files no larger than the size specified. 0 or negative to disable.'),
+      '#description' => t('The archive will be split into files no larger than this size. 0 or negative to disable.'),
       '#element_validate' => array(
         'element_validate_number',
       ),
