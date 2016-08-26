@@ -187,7 +187,7 @@ function islandora_zip_download_generate_zip($info) {
     $size_constrained = TRUE;
     watchdog_exception('islandora_zip_download', $e, 'Hit size limit generating ZIP file. Generation parameters: @params', array('@params' => print_r($info, TRUE)), WATCHDOG_NOTICE);
   }
-  
+
   $array_to_string = function (array $input, $eol = "\n") {
     return implode($eol, $input) . $eol;
   };
