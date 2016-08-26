@@ -42,6 +42,11 @@ function islandora_zip_download_rules_event_info() {
         'label' => t('Generation params'),
         'type' => 'list<list<text>>',
       ),
+      'constrained' => array(
+        'label' => t('Constrained?'),
+        'description' => t('A boolean flag indicating if the generation of ZIP files was stopped prematurely due to hitting a size constraint (some data which was selected was not included).'),
+        'type' => 'boolean',
+      ),
     ),
   );
 

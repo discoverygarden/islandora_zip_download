@@ -55,7 +55,6 @@ function islandora_zip_download_admin_form($form, $form_state) {
   $size_defaults = variable_get('islandora_zip_download_size_limits', array(
     'scale' => 30,
     'source_limit' => 0,
-    'export_limit' => 0,
     'split_size' => 0,
     'split_executable' => 'split',
   ));
@@ -85,16 +84,6 @@ function islandora_zip_download_admin_form($form, $form_state) {
       ),
       '#required' => TRUE,
       '#default_value' => $size_defaults['source_limit'],
-    ),
-    'export_limit' => array(
-      '#type' => 'textfield',
-      '#title' => t('Export limit'),
-      '#description' => t('The size of the archive threshold size. 0 or negative to disable.'),
-      '#element_validate' => array(
-        'element_validate_number',
-      ),
-      '#required' => TRUE,
-      '#default_value' => $size_defaults['export_limit'],
     ),
     'split_size' => array(
       '#type' => 'textfield',

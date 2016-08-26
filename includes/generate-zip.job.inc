@@ -4,35 +4,21 @@
  * Gearman job definition and helpers.
  */
 
-class IslandoraZipDownloadLimitException extends Exception {}
-class IslandoraZipDownloadSourceLimitException extends IslandoraZipDownloadLimitException {
+class IslandoraZipDownloadSourceLimitException extends Exception {
   protected $measure;
   protected $limit;
+  protected $toAdd;
 
   /**
    * Constructor.
    */
-  public function __construct($measure, $limit) {
-    parent::__construct(t('Source material size limit met or exceeded: !measure/!limit', array(
+  public function __construct($measure, $limit, $to_add) {
+    parent::__construct(t('Source material size limit would be exceeded: !to_add + !measure/!limit', array(
+      '!to_add' => $to_add,
       '!measure' => $measure,
       '!limit' => $limit,
     )));
-    $this->measure = $measure;
-    $this->limit = $limit;
-  }
-}
-class IslandoraZipDownloadExportLimitException extends IslandoraZipDownloadLimitException {
-  protected $measure;
-  protected $limit;
-
-  /**
-   * Constructor.
-   */
-  public function __construct($measure, $limit) {
-    parent::__construct(t('Export size limit met or exceeded: !measure/!limit', array(
-      '!measure' => $measure,
-      '!limit' => $limit,
-    )));
+    $this->toAdd = $to_add;
     $this->measure = $measure;
     $this->limit = $limit;
   }
@@ -84,7 +70,6 @@ function islandora_zip_download_generate_zip($info) {
   $base_limits = variable_get('islandora_zip_download_size_limits', array(
     'scale' => 30,
     'source_limit' => 0,
-    'export_limit' => 0,
     'split_size' => 0,
     'split_executable' => 'split',
   ));
@@ -94,24 +79,25 @@ function islandora_zip_download_generate_zip($info) {
   $size_limits = array_map($map_to_gib, $base_limits);
   $size_constrained = FALSE;
 
-  $check_stats = function () use (&$stats, $size_limits) {
+  $check_stats = function ($size_to_add) use (&$stats, $size_limits) {
     // Throw exceptions if we meet or exceed any limits.
-    if ($size_limits['source_limit'] > 0 && $stats['size']['source'] >= $size_limits['source_limit']) {
-      throw new IslandoraZipDownloadSourceLimitException($stats['size']['source'], $size_limits['source_limit']);
-    }
-    elseif ($size_limits['export_limit'] > 0 && $stats['size']['compressed'] >= $size_limits['export_limit']) {
-      throw new IslandoraZipDownloadExportLimitException($stats['size']['compressed'], $size_limits['export_limit']);
+    if ($size_limits['source_limit'] > 0 && $stats['size']['source'] + $size_to_add >= $size_limits['source_limit']) {
+      throw new IslandoraZipDownloadSourceLimitException($stats['size']['source'], $size_limits['source_limit'], $size_to_add);
     }
   };
 
   $write_file_to_zip = function ($actual_file, $destination_name = NULL) use ($zip, $zip_file_path, &$stats, $check_stats) {
+    $actual_path = drupal_realpath($actual_file);
+    $actual_size = filesize($actual_path);
+    $check_stats($actual_size);
     $zip->open($zip_file_path, ZipArchive::CREATE);
-    $zip->addFile(drupal_realpath($actual_file), $destination_name);
+    $zip->addFile($actual_path, $destination_name);
     $zip->close();
+
+    // Update the stats...
     $stats['count'] += 1;
-    $stats['size']['source'] += filesize(drupal_realpath($actual_file));
+    $stats['size']['source'] += $actual_size;
     $stats['size']['compressed'] = filesize($zip_file_path);
-    $check_stats();
   };
   $datastream_filename = function (AbstractDatastream $datastream) {
     // XXX: Copy/pasta from islandora_view_datastream(), when type is
@@ -179,7 +165,7 @@ function islandora_zip_download_generate_zip($info) {
         try {
           $write_datastream_to_zip($datastream, $object_dir);
         }
-        catch (IslandoraZipDownloadLimitException $e) {
+        catch (IslandoraZipDownloadSourceLimitException $e) {
           throw $e;
         }
         catch (RepositoryException $e) {
@@ -197,7 +183,7 @@ function islandora_zip_download_generate_zip($info) {
       }
     }
   }
-  catch (IslandoraZipDownloadLimitException $e) {
+  catch (IslandoraZipDownloadSourceLimitException $e) {
     $size_constrained = TRUE;
     watchdog_exception('islandora_zip_download', $e, 'Hit size limit generating ZIP file. Generation parameters: @params', array('@params' => print_r($info, TRUE)), WATCHDOG_NOTICE);
   }
@@ -207,7 +193,7 @@ function islandora_zip_download_generate_zip($info) {
   };
 
   if ($stats['count'] === 0) {
-    rules_invoke_event('islandora_zip_download_zip_empty', $info);
+    rules_invoke_event('islandora_zip_download_zip_empty', $info, $size_constrained);
   }
   else {
     $split_size = $size_limits['split_size'];
