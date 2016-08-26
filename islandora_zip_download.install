@@ -13,6 +13,8 @@ function islandora_zip_download_uninstall() {
     'islandora_zip_download_pids_to_exclude',
     'islandora_zip_download_dsids_to_exclude',
     'islandora_zip_download_mimes_to_exclude',
+    'islandora_zip_download_ttl',
+    'islandora_zip_download_size_limits',
   );
   array_walk($variables, 'variable_del');
 }

@@ -63,7 +63,7 @@ function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
       $form_state['values']['file_types'] :
       array());
   $pids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_pids_to_exclude', '')));
-  $dsids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_downlaod_dsids_to_exclude', '')));
+  $dsids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_dsids_to_exclude', '')));
   $mimes_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_mimes_to_exclude', '')));
   $pids_to_export = array_diff($pids, $pids_to_filter);
   $mimes_to_export = array_diff($mime_types, $mimes_to_filter);
