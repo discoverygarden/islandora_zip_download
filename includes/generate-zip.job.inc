@@ -237,7 +237,7 @@ function islandora_zip_download_generate_zip($info) {
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('copy /b !files !output', array(
-          '!files' => implode('+', $split),
+          '!files' => implode('+', $parts),
           '!output' => $output,
         )),
       ), "\r\n"), "$directory/reassemble.bat");
