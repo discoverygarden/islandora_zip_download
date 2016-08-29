@@ -12,6 +12,7 @@ function islandora_zip_download_rules_event_info() {
 
   $event['islandora_zip_download_zip_generated'] = array(
     'label' => t('ZIP Generation Complete'),
+    'group' => t('Islandora ZIP Download'),
     'variables' => array(
       'stats' => array(
         'label' => t('Generation stats'),
@@ -37,6 +38,7 @@ function islandora_zip_download_rules_event_info() {
   );
   $event['islandora_zip_download_zip_empty'] = array(
     'label' => t('ZIP Generation resulted in empty archive'),
+    'group' => t('Islandora ZIP Download'),
     'variables' => array(
       'params' => array(
         'label' => t('Generation params'),
@@ -69,6 +71,7 @@ function islandora_zip_download_rules_data_info() {
   );
   $type['islandora_zip_download_generation_stats'] = array(
     'label' => t('Generation statistics'),
+    'group' => t('Islandora ZIP Download'),
     'parent' => 'struct',
     'wrap' => TRUE,
     'property info' => array(
@@ -96,6 +99,7 @@ function islandora_zip_download_rules_data_info() {
   );
   $type['islandora_zip_download_meta_files'] = array(
     'label' => t('Meta info'),
+    'group' => t('Islandora ZIP Download'),
     'parent' => 'list<uri>',
     'wrap' => TRUE,
     'property info' => array(
