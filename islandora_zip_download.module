@@ -48,22 +48,47 @@ function islandora_zip_download_islandora_bookmark_export_handler() {
  *
  * @param array $pids
  *   An array of PIDs to export.
+ * @param NULL|string $style
+ *   The style to be used for exporting, or NULL if not defined.
  * @param array $form_state
  *   The form state of the form where the export is being triggered.
  */
-function islandora_zip_download_generate_manifest($pids, $form_state) {
+function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
+  global $user;
   // Get the selected MIME types to pass off from the UI. Note that the bookmark
   // form uses #tree and the Solr results doesn't.
-  $mime_types = isset($form_state['values']['bookmarks']['fieldset']['file_types']) ? $form_state['values']['bookmarks']['fieldset']['file_types'] : $form_state['values']['file_types'];
-  $pids_to_filter = explode(', ', variable_get('islandora_zip_download_pids_to_exclude', ''));
-  $dsids_to_filter = explode(', ', variable_get('islandora_zip_downlaod_dsids_to_exclude', ''));
+  $mime_types = isset($form_state['values']['bookmarks']['fieldset']['file_types']) ?
+    $form_state['values']['bookmarks']['fieldset']['file_types'] :
+    (isset($form_state['values']['file_types']) ?
+      $form_state['values']['file_types'] :
+      array());
+  $pids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_pids_to_exclude', '')));
+  $dsids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_dsids_to_exclude', '')));
+  $mimes_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_mimes_to_exclude', '')));
   $pids_to_export = array_diff($pids, $pids_to_filter);
-  $mimes_to_export = array_diff($mime_types, explode(', ', variable_get('islandora_zip_download_mimes_to_exclude', '')));
+  $mimes_to_export = array_diff($mime_types, $mimes_to_filter);
   if (empty($pids_to_export)) {
     form_set_error('bookmarks][fieldset', t('No PIDs to export.'));
   }
   // XXX: This is where the manifest creation gets pushed out to Gearman. Pass
   // on the PIDs, MIME types to filter and any DSID restrictions.
+  islandora_job_submit_background('islandora_zip_download_generate_zip', array(
+    'user_id' => $user->uid,
+    'accessed_base_url' => $GLOBALS['base_url'],
+    'mimes' => array(
+      'all' => $mime_types,
+      'exclude' => $mimes_to_filter,
+      'filtered' => $mimes_to_export,
+    ),
+    'dsids' => array(
+      'exclude' => $dsids_to_filter,
+    ),
+    'pids' => array(
+      'base' => $pids,
+      'exclude' => $pids_to_filter,
+      'filtered' => $pids_to_export,
+    ),
+  ));
 }
 
 /**
@@ -112,4 +137,35 @@ function islandora_zip_download_file_type_export_element(&$form, $parent_element
       ),
     );
   }
+}
+
+/**
+ * Implements hook_islandora_job_register_jobs().
+ */
+function islandora_zip_download_islandora_job_register_jobs() {
+  $job = array();
+
+  $job['islandora_zip_download_generate_zip'] = array(
+    'type' => 'inc',
+    'module' => 'islandora_zip_download',
+    'name' => 'includes/generate-zip.job',
+  );
+
+  return $job;
+}
+
+/**
+ * Rules getter callback; interpret integer as a filesize.
+ */
+function islandora_zip_download_rules_file_size_to_human_readable($data, array $options, $name, $type, $info) {
+  module_load_include('inc', 'islandora', 'includes/utilites');
+  return islandora_convert_bytes_to_human_readable($data);
+}
+
+/**
+ * Implements hook_cron().
+ */
+function islandora_zip_download_cron() {
+  module_load_include('inc', 'islandora_zip_download', 'includes/garbage-collection');
+  islandora_zip_download_collect_garbage();
 }

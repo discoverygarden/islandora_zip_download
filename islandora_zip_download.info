@@ -7,3 +7,6 @@ dependencies[] = islandora
 dependencies[] = islandora_bookmark
 dependenices[] = islandora_solr
 dependencies[] = islandora_zip_download_taxonomy
+dependencies[] = rules
+dependencies[] = islandora_job
+php = 5.5

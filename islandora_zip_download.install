@@ -13,6 +13,88 @@ function islandora_zip_download_uninstall() {
     'islandora_zip_download_pids_to_exclude',
     'islandora_zip_download_dsids_to_exclude',
     'islandora_zip_download_mimes_to_exclude',
+    'islandora_zip_download_ttl',
+    'islandora_zip_download_size_limits',
   );
   array_walk($variables, 'variable_del');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function islandora_zip_download_schema() {
+  $schema = array();
+
+  $schema['islandora_zip_download_tracking'] = array(
+    'description' => '',
+    'fields' => array(
+      'path' => array(
+        'description' => 'The directory being tracked.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'created' => array(
+        'description' => 'Approximate start time of generation.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'expiry' => array(
+        'description' => 'Expiration time.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+        'default' => NULL,
+      ),
+    ),
+    'primary key' => array('path'),
+    'indexes' => array(
+      'generation_started' => array('created'),
+      'generation_expiry' => array('expiry'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Add the new table.
+ */
+function islandora_zip_download_update_7100() {
+  $schema = array();
+
+  $schema['islandora_zip_download_tracking'] = array(
+    'description' => '',
+    'fields' => array(
+      'path' => array(
+        'description' => 'The directory being tracked.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'created' => array(
+        'description' => 'Approximate start time of generation.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'expiry' => array(
+        'description' => 'Expiration time.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+        'default' => NULL,
+      ),
+    ),
+    'primary key' => array('path'),
+    'indexes' => array(
+      'generation_started' => array('created'),
+      'generation_expiry' => array('expiry'),
+    ),
+  );
+
+  $txn = db_transaction();
+  foreach ($schema as $name => $info) {
+    db_create_table($name, $info);
+  }
+  unset($txn);
 }
