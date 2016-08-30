@@ -55,7 +55,6 @@ function islandora_zip_download_islandora_bookmark_export_handler() {
  */
 function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
   global $user;
-  drupal_set_message(t('ZIP generation is being processed, an e-mail will be sent when complete.'));
   // Get the selected MIME types to pass off from the UI. Note that the bookmark
   // form uses #tree and the Solr results doesn't.
   $mime_types = isset($form_state['values']['bookmarks']['fieldset']['file_types']) ?
@@ -90,6 +89,7 @@ function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
       'filtered' => $pids_to_export,
     ),
   ));
+  drupal_set_message(t('The ZIP generation job has been queued, an e-mail will be sent when complete.'));
 }
 
 /**
