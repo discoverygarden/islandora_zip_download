@@ -1,0 +1,12 @@
+name = islandora_zip_download_rules_email
+core = 7.x
+package = Islandora ZIP Downlaod
+dependencies[] = entity
+dependencies[] = islandora_zip_download
+dependencies[] = rules
+features[features_api][] = api:2
+features[rules_config][] = rules_islandora_zip_download_complete_constrained
+features[rules_config][] = rules_islandora_zip_download_complete_full
+features[rules_config][] = rules_islandora_zip_download_incomplete_constrained
+features[rules_config][] = rules_islandora_zip_download_incomplete_empty
+project path = sites/all/modules/islandora_zip_download/modules
