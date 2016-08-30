@@ -13,6 +13,8 @@ This module requires the following modules/libraries:
 * [Islandora Solr](https://github.com/islandora/islandora_solr_search)
 * [Islandora Bookmark](https://github.com/islandora/islandora_bookmark)
 * [Islandora Job](https://github.com/discoverygarden/islandora_job)
+* [UUID](https://www.drupal.org/project/uuid)
+* [Rules](https://www.drupal.org/project/rules)
 
 ## Installation
 
