@@ -9,4 +9,5 @@ dependenices[] = islandora_solr
 dependencies[] = islandora_zip_download_taxonomy
 dependencies[] = rules
 dependencies[] = islandora_job
+dependencies[] = uuid
 php = 5.5
