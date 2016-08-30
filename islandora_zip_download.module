@@ -89,7 +89,7 @@ function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
       'filtered' => $pids_to_export,
     ),
   ));
-  drupal_set_message(t('The ZIP generation job has been queued, an e-mail will be sent when complete.'));
+  drupal_set_message(t('The ZIP generation job has been queued. An e-mail will be sent when complete.'));
 }
 
 /**
