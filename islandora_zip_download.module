@@ -174,7 +174,11 @@ function islandora_zip_download_cron() {
  * Implements hook_tokens().
  */
 function islandora_zip_download_tokens($type, $tokens, array $data = array(), array $options = array()) {
-  if (in_array($type, array_keys(module_invoke('islandora_zip_download', 'rules_data_info')))) {
+  static $types = NULL;
+  if ($types === NULL) {
+    $types = array_keys(module_invoke('islandora_zip_download', 'rules_data_info'));
+  }
+  if (in_array($type, $types) {
     // XXX: Rules is silly, and does not automatically expose tokens for types
     // from hook_rules_data_info()... Let's roll ours.
     $cache = rules_get_cache();
