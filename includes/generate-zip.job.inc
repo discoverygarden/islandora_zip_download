@@ -267,7 +267,7 @@ function islandora_zip_download_generate_zip($info) {
       drupal_unlink($zip_file_uri);
     }
 
-    rules_invoke_event('islandora_zip_download_zip_generated', $info, $stats, $urls, $meta_urls, $size_constrained);
+    rules_invoke_event('islandora_zip_download_zip_generated', $stats, $urls, $meta_urls, $size_constrained);
     db_update('islandora_zip_download_tracking')
       ->fields(array('expiry' => time() + (variable_get('islandora_zip_download_ttl', 48) * 3600)))
       ->condition('path', $directory)

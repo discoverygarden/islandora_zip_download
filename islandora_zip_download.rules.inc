@@ -72,7 +72,7 @@ function islandora_zip_download_rules_data_info() {
   $type['islandora_zip_download_generation_stats'] = array(
     'label' => t('Generation statistics'),
     'group' => t('Islandora ZIP Download'),
-    'parent' => 'struct',
+    'type' => 'struct',
     'wrap' => TRUE,
     'property info' => array(
       'count' => array(
@@ -100,7 +100,7 @@ function islandora_zip_download_rules_data_info() {
   $type['islandora_zip_download_meta_files'] = array(
     'label' => t('Meta info'),
     'group' => t('Islandora ZIP Download'),
-    'parent' => 'list<uri>',
+    'type' => 'list<uri>',
     'wrap' => TRUE,
     'property info' => array(
       'file_list' => array(

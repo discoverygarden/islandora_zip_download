@@ -158,7 +158,7 @@ function islandora_zip_download_islandora_job_register_jobs() {
  * Rules getter callback; interpret integer as a filesize.
  */
 function islandora_zip_download_rules_file_size_to_human_readable($data, array $options, $name, $type, $info) {
-  module_load_include('inc', 'islandora', 'includes/utilites');
+  module_load_include('inc', 'islandora', 'includes/utilities');
   return islandora_convert_bytes_to_human_readable($data);
 }
 
@@ -168,4 +168,19 @@ function islandora_zip_download_rules_file_size_to_human_readable($data, array $
 function islandora_zip_download_cron() {
   module_load_include('inc', 'islandora_zip_download', 'includes/garbage-collection');
   islandora_zip_download_collect_garbage();
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function islandora_zip_download_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  if (in_array($type, array_keys(module_invoke('islandora_zip_download', 'rules_data_info')))) {
+    // XXX: Rules is silly, and does not automatically expose tokens for types
+    // from hook_rules_data_info()... Let's roll ours.
+    $cache = rules_get_cache();
+    $data_info = $cache['data_info'];
+
+    $wrapper = entity_metadata_wrapper('struct', $data[$type], $data_info[$type]);
+    return entity_token_tokens('struct', $tokens, array('struct' => $wrapper), $options);
+  }
 }
