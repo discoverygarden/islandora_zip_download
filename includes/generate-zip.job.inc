@@ -216,7 +216,6 @@ function islandora_zip_download_generate_zip($info) {
       };
       $parts = glob($dir_prefix . '*');
       $uris = array_map($map_to_uri, $parts);
-      $zip_listing = $uris;
       $output = 'download.zip';
       $uris[] = $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
@@ -257,7 +256,6 @@ function islandora_zip_download_generate_zip($info) {
     $GLOBALS['base_url'] = $info['accessed_base_url'];
     $urls = array_map('file_create_url', $uris);
     $uris_and_download = $split ? array_merge($uris, array($zip_file_uri)) : $uris;
-    dd($zip_listing);
     $meta_urls = array_map('file_create_url', array(
       'file_list' => file_unmanaged_save_data($array_to_string($urls), "$directory/files.txt"),
       'md5' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris_and_download)), "$directory/md5.txt"),
