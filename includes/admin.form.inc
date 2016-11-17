@@ -33,6 +33,7 @@ function islandora_zip_download_admin_form($form, $form_state) {
     'islandora_zip_download_pids_to_exclude' => array(
       '#type' => 'textarea',
       '#title' => t('PIDs to exclude (comma separated)'),
+      '#description' => t('Note that this will not include any children of this PID.'),
       '#default_value' => variable_get('islandora_zip_download_pids_to_exclude', ''),
     ),
     'islandora_zip_download_dsids_to_exclude' => array(

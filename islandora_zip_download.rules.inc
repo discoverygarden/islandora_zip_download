@@ -21,7 +21,7 @@ function islandora_zip_download_rules_event_info() {
       ),
       'paths' => array(
         'label' => t('ZIP files'),
-        'description' => t('All ZIP files (and reassembly helper scripts). A file containing the same is availble as "file_list" on "meta".'),
+        'description' => t('All ZIP files (and reassembly helper scripts). A file containing the same is available as "file_list" on "meta".'),
         'type' => 'list<uri>',
       ),
       'meta' => array(

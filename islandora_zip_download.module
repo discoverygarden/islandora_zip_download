@@ -25,8 +25,8 @@ function islandora_zip_download_menu() {
  */
 function islandora_zip_download_permission() {
   return array(
-    'adminisiter islandora_zip_download' => array(
-      'title' => t('Adminisiter Islandora ZIP Download'),
+    'administer islandora_zip_download' => array(
+      'title' => t('Administer Islandora ZIP Download'),
       'description' => t('Perform administration tasks for Islandora ZIP Download.'),
     ),
   );
@@ -57,14 +57,26 @@ function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
   global $user;
   // Get the selected MIME types to pass off from the UI. Note that the bookmark
   // form uses #tree and the Solr results doesn't.
-  $mime_types = isset($form_state['values']['bookmarks']['fieldset']['file_types']) ?
-    $form_state['values']['bookmarks']['fieldset']['file_types'] :
-    (isset($form_state['values']['file_types']) ?
-      $form_state['values']['file_types'] :
-      array());
-  $pids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_pids_to_exclude', '')));
-  $dsids_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_dsids_to_exclude', '')));
-  $mimes_to_filter = array_filter(explode(', ', variable_get('islandora_zip_download_mimes_to_exclude', '')));
+  $mime_types = array();
+  if (isset($form_state['values']['bookmarks']['fieldset']['file_types'])) {
+    if (!empty($form_state['values']['bookmarks']['fieldset']['file_types'])) {
+      $mime_types = $form_state['values']['bookmarks']['fieldset']['file_types'];
+    }
+    else {
+      $mime_types = $form_state['complete form']['bookmarks']['fieldset']['file_types']['#options'];
+    }
+  }
+  elseif (isset($form_state['values']['file_types'])) {
+    if (!empty($form_state['values']['file_types'])) {
+      $mime_types = $form_state['values']['file_types'];
+    }
+    else {
+      $mime_types = $form_state['complete form']['islandora_bookmark_export']['fieldset']['file_types']['#options'];
+    }
+  }
+  $pids_to_filter = array_map('trim', array_filter(explode(',', variable_get('islandora_zip_download_pids_to_exclude', ''))));
+  $dsids_to_filter = array_map('trim', array_filter(explode(',', variable_get('islandora_zip_download_dsids_to_exclude', ''))));
+  $mimes_to_filter = array_map('trim', array_filter(explode(',', variable_get('islandora_zip_download_mimes_to_exclude', ''))));
   $pids_to_export = array_diff($pids, $pids_to_filter);
   $mimes_to_export = array_diff($mime_types, $mimes_to_filter);
   if (empty($pids_to_export)) {
@@ -96,14 +108,18 @@ function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
  * Implements hook_form_FORMID_alter().
  */
 function islandora_zip_download_form_islandora_bookmark_results_form_alter(&$form, &$form_state) {
-  islandora_zip_download_file_type_export_element($form, 'islandora_bookmark_export');
+  if (user_access('export islandora bookmarks')) {
+    islandora_zip_download_file_type_export_element($form, 'islandora_bookmark_export');
+  }
 }
 
 /**
  * Implements hook_form_FORMID_alter().
  */
 function islandora_zip_download_form_islandora_bookmark_detailed_form_alter(&$form, &$form_state) {
-  islandora_zip_download_file_type_export_element($form, 'bookmarks');
+  if (user_access('export islandora bookmarks')) {
+    islandora_zip_download_file_type_export_element($form, 'bookmarks');
+  }
 }
 
 /**
