@@ -132,9 +132,7 @@ function islandora_zip_download_generate_zip($info) {
   $unfiltered = function (AbstractDatastream $datastream) use ($info) {
     $id = $datastream->id;
     $mime = $datastream->mimetype;
-
-    return !in_array($id, $info['dsids']['exclude']) && (
-        empty($info['mimes']['all']) || in_array($datastream->mimetype, $info['mimes']['filtered']));
+    return !in_array($id, $info['dsids']['exclude']) && in_array($datastream->mimetype, $info['mimes']['filtered']);
   };
   $iterator = new RecursiveIteratorIterator(new IslandoraZipDownloadZipIterator($info['pids']['filtered'], $info['pids']['exclude']), RecursiveIteratorIterator::SELF_FIRST);
 
