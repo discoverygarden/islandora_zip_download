@@ -428,7 +428,9 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
         break;
       }
     }
-    $this->exclude = $this->originalExclusions;
+    if ($this->parent === NULL) {
+      $this->exclude = $this->originalExclusions;
+    }
   }
 
   /**
