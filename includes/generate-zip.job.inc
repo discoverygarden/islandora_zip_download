@@ -292,7 +292,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    *   An array of PIDs to exclude from iteration. Descendents will also be
    *   excluded (unless they can be accessed via another ancestor entailed from
    *   $start).
-   * @param IslandoraZipDonwloadZipIterator|NULL $parent
+   * @param IslandoraZipDownloadZipIterator|NULL $parent
    *   Either the parent iterator (to help build out the full directory path),
    *   or NULL if we are the initial/root iterator.
    */
@@ -423,7 +423,11 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    * Inherits.
    */
   public function rewind() {
-    $this->offset = 0;
+    for ($this->offset = 0; $this->offset < $this->total; $this->offset++) {
+      if ($this->valid()) {
+        break;
+      }
+    }
     $this->exclude = $this->originalExclusions;
   }
 
