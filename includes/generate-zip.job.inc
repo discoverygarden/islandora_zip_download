@@ -437,7 +437,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    * Inherits.
    */
   public function rewind() {
-    for ($this->offset = 0; $this->offset < $this->total; $this->offset++) {
+    for ($this->offset = 0; $this->offset < $this->total; $this->offset += 1) {
       if ($this->valid()) {
         break;
       }
