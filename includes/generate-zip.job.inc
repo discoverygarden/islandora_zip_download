@@ -48,15 +48,25 @@ function islandora_zip_download_generate_zip($info) {
   $user = user_load($info['user_id']);
   drupal_static_reset('islandora_get_tuque_connection');
 
-  $directory = file_default_scheme() . '://islandora_zip_download/' . uuid_generate();
+  $uuid = uuid_generate();
+  $base_dir = file_default_scheme() . '://islandora_zip_download';
+  $directory = "$base_dir/$uuid";
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+  if (!file_exists("$base_dir/.htaccess")) {
+    $htaccess_content = <<<'EOHT'
+<FilesMatch "^reassemble\.(sh|bat)$">
+  Allow from all
+</FilesMatch>
+EOHT;
+    file_put_contents("$base_dir/.htaccess", $htaccess_content);
+  }
   db_insert('islandora_zip_download_tracking')
     ->fields(array(
       'path' => $directory,
       'created' => time(),
     ))
     ->execute();
-  $zip_file_uri = file_create_filename('download.zip', $directory);
+  $zip_file_uri = file_create_filename("$uuid.zip", $directory);
   $zip_file_path = drupal_realpath($zip_file_uri);
   $zip = new ZipArchive();
   $stats = array(
@@ -199,7 +209,7 @@ function islandora_zip_download_generate_zip($info) {
     if ($split) {
       module_load_include('inc', 'uuid');
       $real_dir = drupal_realpath($directory);
-      $prefix = 'zip';
+      $prefix = "{$uuid}_zip_";
       $dir_prefix = "$real_dir/$prefix";
       $command_components = array(
         $base_limits['split_executable'],
@@ -215,23 +225,27 @@ function islandora_zip_download_generate_zip($info) {
         return "$directory/$basename";
       };
       $parts = glob($dir_prefix . '*');
+      $part_names = array_map('drupal_basename', $parts);
       $uris = array_map($map_to_uri, $parts);
-      $output = 'download.zip';
+      $output = drupal_basename($zip_file_uri);
       $uris[] = $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
-        '# Place this file beside all the partial ZIP downloads, and on execution, it will',
-        '# combine all the component parts into the decompressable ZIP file.',
-        format_string('copy /b !files !output', array(
-          '!files' => implode('+', $parts),
+        '@echo off',
+        'rem Place this file beside all the partial ZIP downloads, and on execution, it will',
+        'rem combine all the component parts into the decompressable ZIP file.',
+        format_string('copy /b /-y !files !output', array(
+          '!files' => implode('+', $part_names),
           '!output' => $output,
         )),
+        "echo Reassembled archive to $output",
       ), "\r\n"), "$directory/reassemble.bat");
       $uris[] = $reassembly_sh = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
-        format_string('cat !prefix* > !output', array(
-          '!prefix' => $prefix,
+        format_string('cat !files > !output', array(
+          '!files' => implode(' ', $part_names),
           '!output' => $output,
         )),
+        "echo Reassembled archive to $output",
       )), "$directory/reassemble.sh");
     }
     else {
