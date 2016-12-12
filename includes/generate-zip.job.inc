@@ -209,7 +209,7 @@ EOHT;
     if ($split) {
       module_load_include('inc', 'uuid');
       $real_dir = drupal_realpath($directory);
-      $prefix = "{$uuid}_zip_";
+      $prefix = "{$uuid}_zip";
       $dir_prefix = "$real_dir/$prefix";
       $command_components = array(
         $base_limits['split_executable'],
