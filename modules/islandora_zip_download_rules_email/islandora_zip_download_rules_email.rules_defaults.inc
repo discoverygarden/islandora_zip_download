@@ -17,10 +17,23 @@ function islandora_zip_download_rules_email_default_rules_configuration() {
       "ON" : { "islandora_zip_download_zip_generated" : [] },
       "IF" : [ { "data_is" : { "data" : [ "constrained" ], "value" : "1" } } ],
       "DO" : [
+        { "variable_add" : {
+            "USING" : { "type" : "text" },
+            "PROVIDE" : { "variable_added" : { "files" : "Files" } }
+          }
+        },
+        { "LOOP" : {
+            "USING" : { "list" : [ "paths" ] },
+            "ITEM" : { "file" : "File" },
+            "DO" : [
+              { "data_set" : { "data" : [ "files" ], "value" : "[files:value]\r\n[file:value]" } }
+            ]
+          }
+        },
         { "mail" : {
             "to" : [ "site:current-user:mail" ],
             "subject" : "Your ZIP file is ready for download",
-            "message" : "Your ZIP file is ready for download. Added [stats:count] datastreams at a total size of [stats:size:source:human_readable] compressed to [stats:size:compressed:human_readable]. Size limit reached, the resulting ZIP does not contain all of the resources selected. \\r\\n\\r\\nIt may still be download via the link below within the next [expiry:value] hours, as it will be deleted afterwards. \\r\\n\\r\\n[meta:file-list]\\r\\n\\r\\nTo verify the integrity of the archive there is both and MD5 and SHA1 of the ZIP and any of its available parts.\\r\\n\\r\\nMD5: [meta:md5]\\r\\nSHA1: [meta:sha1]",
+            "message" : "Your ZIP file is ready for download. Added [stats:count] datastreams at a total size of [stats:size:source:human_readable] compressed to [stats:size:compressed:human_readable]. Size limit reached, the resulting ZIP does not contain all of the resources selected. \r\n\r\nPlease download it via the link below within the next [expiry:value] hours, as it will be deleted afterwards. \r\n\r\n[files:value]\r\n\r\nTo verify the integrity of the archive there is both and MD5 and SHA1 of the ZIP and any of its available parts.\r\n\r\nMD5: [meta:md5]\r\nSHA1: [meta:sha1]\r\nFile list: [meta:file-list]",
             "from" : "[site:name]",
             "language" : [ "" ]
           }
@@ -36,10 +49,23 @@ function islandora_zip_download_rules_email_default_rules_configuration() {
       "ON" : { "islandora_zip_download_zip_generated" : [] },
       "IF" : [ { "data_is" : { "data" : [ "constrained" ], "value" : "0" } } ],
       "DO" : [
+        { "variable_add" : {
+            "USING" : { "type" : "text" },
+            "PROVIDE" : { "variable_added" : { "files" : "Files" } }
+          }
+        },
+        { "LOOP" : {
+            "USING" : { "list" : [ "paths" ] },
+            "ITEM" : { "file" : "File" },
+            "DO" : [
+              { "data_set" : { "data" : [ "files" ], "value" : "[files:value]\r\n[file:value]" } }
+            ]
+          }
+        },
         { "mail" : {
             "to" : [ "site:current-user:mail" ],
             "subject" : "Your ZIP file is ready for download",
-            "message" : "Your ZIP file is ready for download. Added [stats:count] datastreams at a total size of [stats:size:source:human_readable] compressed to [stats:size:compressed:human_readable].\\r\\n\\r\\nPlease download it via the link below within the next [expiry:value] hours, as it will be deleted afterwards. \\r\\n\\r\\n[meta:file-list]\\r\\n\\r\\nTo verify the integrity of the archive there is both and MD5 and SHA1 of the ZIP and any of its available parts.\\r\\n\\r\\nMD5: [meta:md5]\\r\\nSHA1: [meta:sha1]",
+            "message" : "Your ZIP file is ready for download. Added [stats:count] datastreams at a total size of [stats:size:source:human_readable] compressed to [stats:size:compressed:human_readable].\r\n\r\nPlease download it via the link below within the next [expiry:value] hours, as it will be deleted afterwards. \r\n\r\n[files:value]\r\n\r\nTo verify the integrity of the archive there is both and MD5 and SHA1 of the ZIP and any of its available parts.\r\n\r\nMD5: [meta:md5]\r\nSHA1: [meta:sha1]\r\nFile list: [meta:file-list]",
             "from" : "[site:name]",
             "language" : [ "" ]
           }
