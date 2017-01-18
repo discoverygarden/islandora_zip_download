@@ -270,11 +270,24 @@ EOHT;
     $GLOBALS['base_url'] = $info['accessed_base_url'];
     $urls = array_map('file_create_url', $uris);
     $uris_and_download = $split ? array_merge($uris, array($zip_file_uri)) : $uris;
-    $meta_urls = array_map('file_create_url', array(
-      'file_list' => file_unmanaged_save_data($array_to_string($urls), "$directory/files.txt"),
-      'md5' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris_and_download)), "$directory/md5.txt"),
-      'sha1' => file_unmanaged_save_data($array_to_string(array_map($map_uri_to_sha1line, $uris_and_download)), "$directory/sha1.txt"),
-    ));
+
+    $meta_urls = array(
+      'file_list' => file_create_url(file_unmanaged_save_data($array_to_string($urls), "$directory/files.txt")),
+    );
+    $checksum_settings = variable_get('islandora_zip_download_checksums', array());
+    if (isset($checksum_settings['md5']) && $checksum_settings['md5']) {
+      $meta_urls['md5'] = file_create_url(file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris_and_download)), "$directory/md5.txt"));
+    }
+    else {
+      $meta_urls['md5'] = t('N/A');
+    }
+    if (isset($checksum_settings['sha1']) && $checksum_settings['sha1']) {
+      $meta_urls['sha1'] = file_create_url(file_unmanaged_save_data($array_to_string(array_map($map_uri_to_sha1line, $uris_and_download)), "$directory/sha1.txt"));
+    }
+    else {
+      $meta_urls['sha1'] = t('N/A');
+    }
+
     if ($split) {
       drupal_unlink($zip_file_uri);
     }

@@ -52,6 +52,13 @@ function islandora_zip_download_admin_form($form, $form_state) {
       '#description' => t('The number of hours for which the generated files will be kept; after this time, they will be eligible for deletion.'),
       '#default_value' => variable_get('islandora_zip_download_ttl', 48),
     ),
+    'islandora_zip_download_checksums' => array(
+      '#type' => 'checkboxes',
+      '#options' => array('md5' => t('MD5'), 'sha1' => t('SHA1')),
+      '#title' => t('Checksums'),
+      '#default_value' => variable_get('islandora_zip_download_checksums', array()),
+      '#description' => t('Checksums to run on downloads.'),
+    ),
   );
   $size_defaults = variable_get('islandora_zip_download_size_limits', array(
     'scale' => 30,
