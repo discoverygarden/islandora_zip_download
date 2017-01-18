@@ -274,7 +274,7 @@ EOHT;
     $meta_urls = array(
       'file_list' => file_create_url(file_unmanaged_save_data($array_to_string($urls), "$directory/files.txt")),
     );
-    $checksum_settings = variable_get('islandora_zip_download_checksums', array());
+    $checksum_settings = variable_get('islandora_zip_download_checksums', array('md5' => 'md5'));
     if (isset($checksum_settings['md5']) && $checksum_settings['md5']) {
       $meta_urls['md5'] = file_create_url(file_unmanaged_save_data($array_to_string(array_map($map_uri_to_md5line, $uris_and_download)), "$directory/md5.txt"));
     }

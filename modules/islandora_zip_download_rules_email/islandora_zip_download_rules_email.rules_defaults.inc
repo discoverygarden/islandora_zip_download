@@ -65,7 +65,7 @@ function islandora_zip_download_rules_email_default_rules_configuration() {
         { "mail" : {
             "to" : [ "site:current-user:mail" ],
             "subject" : "Your ZIP file is ready for download",
-            "message" : "Your ZIP file is ready for download. Added [stats:count] datastreams at a total size of [stats:size:source:human_readable] compressed to [stats:size:compressed:human_readable].\r\n\r\nPlease download it via the link below within the next [expiry:value] hours, as it will be deleted afterwards. \r\n\r\n[files:value]\r\n\r\nTo verify the integrity of the archive there is both and MD5 and SHA1 of the ZIP and any of its available parts.\r\n\r\nMD5: [meta:md5]\r\nSHA1: [meta:sha1]\r\nFile list: [meta:file-list]",
+            "message" : "Your ZIP file is ready for download. Added [stats:count] datastreams at a total size of [stats:size:source:human_readable] compressed to [stats:size:compressed:human_readable].\r\n\r\nPlease download it via the link below within the next [expiry:value] hours, as it will be deleted afterwards. \r\n\r\n[files:value]\r\n\r\nTo verify the integrity of the archive there is both an MD5 and SHA1 of the ZIP and any of its available parts.\r\n\r\nMD5: [meta:md5]\r\nSHA1: [meta:sha1]\r\nFile list: [meta:file-list]",
             "from" : "[site:name]",
             "language" : [ "" ]
           }

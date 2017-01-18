@@ -56,7 +56,7 @@ function islandora_zip_download_admin_form($form, $form_state) {
       '#type' => 'checkboxes',
       '#options' => array('md5' => t('MD5'), 'sha1' => t('SHA1')),
       '#title' => t('Checksums'),
-      '#default_value' => variable_get('islandora_zip_download_checksums', array()),
+      '#default_value' => variable_get('islandora_zip_download_checksums', array('md5' => 'md5')),
       '#description' => t('Checksums to run on downloads.'),
     ),
   );
