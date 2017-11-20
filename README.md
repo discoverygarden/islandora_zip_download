@@ -20,6 +20,13 @@ This module requires the following modules/libraries:
 
 Install as usual, see [this](https://drupal.org/documentation/install/modules-themes/modules-7) for further information.
 
+In order to have the Gearman workers listen for this job, you will need to stop & start the workers:
+
+```
+service gearman-workers stop
+service gearman-workers start
+```
+
 Depending on the final configuration, it may be necessary to install at least [version 1.11.0 of the "zip" extension](https://pecl.php.net/package-changelog.php?package=zip), in order to obtain ZIP64 support, to support large file sizes.
 
 ## Configuration
