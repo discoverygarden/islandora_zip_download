@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Extension of Islandora Bookmark that allows for mass downloading of content.
@@ -48,12 +49,12 @@ function islandora_zip_download_islandora_bookmark_export_handler() {
  *
  * @param array $pids
  *   An array of PIDs to export.
- * @param NULL|string $style
+ * @param null|string $style
  *   The style to be used for exporting, or NULL if not defined.
  * @param array $form_state
  *   The form state of the form where the export is being triggered.
  */
-function islandora_zip_download_generate_manifest($pids, $style, $form_state) {
+function islandora_zip_download_generate_manifest(array $pids, $style, array $form_state) {
   global $user;
   // Get the selected MIME types to pass off from the UI. Note that the bookmark
   // form uses #tree and the Solr results doesn't.
@@ -131,7 +132,7 @@ function islandora_zip_download_form_islandora_bookmark_detailed_form_alter(&$fo
  *   The ID of the parent element where the element will be inserted. Also used
  *   for the states selector.
  */
-function islandora_zip_download_file_type_export_element(&$form, $parent_element) {
+function islandora_zip_download_file_type_export_element(array &$form, $parent_element) {
   module_load_include('inc', 'islandora_zip_download', 'includes/utilities');
   $options = islandora_zip_download_mimetypes_to_export();
   if ($options) {

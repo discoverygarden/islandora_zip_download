@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Administration form for Islandora ZIP Download.
@@ -15,7 +16,7 @@
  * @return array
  *   The Drupal form definition.
  */
-function islandora_zip_download_admin_form($form, $form_state) {
+function islandora_zip_download_admin_form(array $form, array $form_state) {
   module_load_include('inc', 'islandora_zip_download_taxonomy', 'includes/utilities');
   $human_readable_mimes = islandora_zip_download_taxonomy_human_readable_mimetypes(TRUE);
   $form['config'] = array(
