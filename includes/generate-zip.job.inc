@@ -1,9 +1,13 @@
 <?php
+
 /**
  * @file
  * Gearman job definition and helpers.
  */
 
+/**
+ * Exception thrown for generation issues.
+ */
 class IslandoraZipDownloadSourceLimitException extends Exception {
   protected $measure;
   protected $limit;
@@ -22,6 +26,7 @@ class IslandoraZipDownloadSourceLimitException extends Exception {
     $this->measure = $measure;
     $this->limit = $limit;
   }
+
 }
 
 /**
@@ -39,9 +44,9 @@ class IslandoraZipDownloadSourceLimitException extends Exception {
  *   - pids: An associative array containing:
  *     - base: The PIDs from which to start iteration.
  *     - exclude: The PIDs configured to be excluded.
- *     - filtered: 'base' less 'exclude'
+ *     - filtered: 'base' less 'exclude'.
  */
-function islandora_zip_download_generate_zip($info) {
+function islandora_zip_download_generate_zip(array $info) {
   // Need to act as the given user, so as not to expose resources to which
   // the user should not have access.
   global $user;
@@ -141,7 +146,6 @@ EOHT;
   };
   $unfiltered = function (AbstractDatastream $datastream) use ($info) {
     $id = $datastream->id;
-    $mime = $datastream->mimetype;
     return !in_array($id, $info['dsids']['exclude']) && in_array($datastream->mimetype, $info['mimes']['filtered']);
   };
   $iterator = new RecursiveIteratorIterator(new IslandoraZipDownloadZipIterator($info['pids']['filtered'], $info['pids']['exclude']), RecursiveIteratorIterator::SELF_FIRST);
@@ -228,7 +232,7 @@ EOHT;
       $part_names = array_map('drupal_basename', $parts);
       $uris = array_map($map_to_uri, $parts);
       $output = drupal_basename($zip_file_uri);
-      $uris[] = $reassembly_bat = file_unmanaged_save_data($array_to_string(array(
+      $uris[] = file_unmanaged_save_data($array_to_string(array(
         '@echo off',
         'rem Place this file beside all the partial ZIP downloads, and on execution, it will',
         'rem combine all the component parts into the decompressable ZIP file.',
@@ -238,7 +242,7 @@ EOHT;
         )),
         "echo Reassembled archive to $output",
       ), "\r\n"), "$directory/reassemble.bat");
-      $uris[] = $reassembly_sh = file_unmanaged_save_data($array_to_string(array(
+      $uris[] = file_unmanaged_save_data($array_to_string(array(
         '# Place this file beside all the partial ZIP downloads, and on execution, it will',
         '# combine all the component parts into the decompressable ZIP file.',
         format_string('cat !files > !output', array(
@@ -302,12 +306,50 @@ EOHT;
   }
 }
 
+/**
+ * Recursive iterator to ingest objects and their children.
+ */
 class IslandoraZipDownloadZipIterator implements RecursiveIterator {
+  /**
+   * PIDs over which this iterator should _avoid_ iterating.
+   *
+   * @var string[]
+   */
   protected $exclude;
+
+  /**
+   * Offset in $start, tracking our position.
+   *
+   * @var int
+   */
   protected $offset = 0;
+
+  /**
+   * PIDs over which this iterator should iterate.
+   *
+   * @var string[]
+   */
   protected $start = array();
+
+  /**
+   * The total number of PIDs iterated.
+   *
+   * @var int
+   */
   protected $total = 0;
+
+  /**
+   * Original PIDs being excluded.
+   *
+   * @var string[]
+   */
   protected $originalExclusions = array();
+
+  /**
+   * Parent iterator when recursing.
+   *
+   * @var IslandoraZipDownloadZipIterator|null
+   */
   protected $parent = NULL;
 
   /**
@@ -319,11 +361,11 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
    *   An array of PIDs to exclude from iteration. Descendents will also be
    *   excluded (unless they can be accessed via another ancestor entailed from
    *   $start).
-   * @param IslandoraZipDownloadZipIterator|NULL $parent
+   * @param IslandoraZipDownloadZipIterator|null $parent
    *   Either the parent iterator (to help build out the full directory path),
    *   or NULL if we are the initial/root iterator.
    */
-  public function __construct($start, &$exclude = array(), $parent = NULL) {
+  public function __construct(array $start, array &$exclude = array(), $parent = NULL) {
     $this->start = array_values($start);
     $this->total = count($this->start);
     $this->backend = 'solr';
@@ -351,7 +393,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
       variable_get('islandora_solr_member_of_collection_field', 'RELS_EXT_isMemberOfCollection_uri_ms'),
       variable_get('islandora_compound_object_relationship', 'isConstituentOf'),
     );
-    $map_field_in = function($field) {
+    $map_field_in = function ($field) {
       return format_string('!field:"info:fedora/!pid"', array(
         '!field' => $field,
       ));
@@ -409,7 +451,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function hasChildren() {
     // Test if $this->current() has children.
@@ -422,7 +464,7 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   protected function lowerGetChildren() {
     if ($this->backend == 'solr') {
@@ -440,14 +482,14 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function getChildren() {
     return new static($this->lowerGetChildren(), $this->exclude, $this);
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function rewind() {
     for ($this->offset = 0; $this->offset < $this->total; $this->offset += 1) {
@@ -461,28 +503,28 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function current() {
     return $this->start[$this->offset];
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function key() {
     return $this->current();
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function valid() {
     return $this->offset < $this->total && !in_array($this->current(), $this->exclude);
   }
 
   /**
-   * Inherits.
+   * {@inheritdoc}
    */
   public function next() {
     $this->exclude[] = $this->current();
@@ -490,4 +532,5 @@ class IslandoraZipDownloadZipIterator implements RecursiveIterator {
       $this->offset += 1;
     }
   }
+
 }

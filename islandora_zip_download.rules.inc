@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Rules hook implementations.

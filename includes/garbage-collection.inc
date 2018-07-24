@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Garbage collection and related functions.
