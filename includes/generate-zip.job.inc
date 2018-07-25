@@ -44,9 +44,17 @@ class IslandoraZipDownloadSourceLimitException extends Exception {
 function islandora_zip_download_generate_zip($info) {
   // Need to act as the given user, so as not to expose resources to which
   // the user should not have access.
+  // @see https://www.drupal.org/node/218104
   global $user;
+  $original_user = $user;
+  $old_state = drupal_save_session();
+  drupal_save_session(FALSE);
+
   $user = user_load($info['user_id']);
   drupal_static_reset('islandora_get_tuque_connection');
+  $tuque = islandora_get_tuque_connection();
+  // Nuke the cache, to ensure things get loaded fresh.
+  $tuque->cache->resetCache();
 
   $uuid = uuid_generate();
   $base_dir = file_default_scheme() . '://islandora_zip_download';
@@ -300,6 +308,18 @@ EOHT;
       ->execute();
     $GLOBALS['old_base_url'] = $old_base;
   }
+
+  // Replace user and resume sessions.
+  $user = $original_user;
+
+  drupal_static_reset('islandora_get_tuque_connection');
+  $tuque = islandora_get_tuque_connection();
+  // Nuke the cache, to ensure things get loaded fresh, to avoid leaking objects
+  // loaded with our user.
+  $tuque->cache->resetCache();
+
+  // Resume session things.
+  drupal_save_session($old_state);
 }
 
 class IslandoraZipDownloadZipIterator implements RecursiveIterator {
