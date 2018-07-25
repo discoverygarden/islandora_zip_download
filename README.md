@@ -16,6 +16,9 @@ This module requires the following modules/libraries:
 * [UUID](https://www.drupal.org/project/uuid)
 * [Rules](https://www.drupal.org/project/rules)
 
+It is highly recommended that the sub-module
+islandora_zip_download_rules_email be enabled or a similar rule be created.
+
 ## Installation
 
 Install as usual, see [this](https://drupal.org/documentation/install/modules-themes/modules-7) for further information.
