@@ -166,6 +166,7 @@ function islandora_zip_download_islandora_job_register_jobs() {
     'type' => 'inc',
     'module' => 'islandora_zip_download',
     'name' => 'includes/generate-zip.job',
+    'alias' => 'izd-gz',
   );
 
   return $job;
