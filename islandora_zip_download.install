@@ -33,6 +33,7 @@ function islandora_zip_download_schema() {
         'description' => 'The directory being tracked.',
         'type' => 'varchar',
         'length' => 128,
+        'not null' => TRUE,
       ),
       'created' => array(
         'description' => 'Approximate start time of generation.',
