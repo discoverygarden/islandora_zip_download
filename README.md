@@ -30,6 +30,19 @@ service gearman-workers stop
 service gearman-workers start
 ```
 
+If the above returns an error of the type `Failed to stop gearman-workers.service: Unit gearman-workers.service not loaded`, you may want to try the following command instead (might require `sudo`):
+
+```
+service gearman-job-server restart
+```
+
+To check that the workers have correctly registered the new module, run
+
+```
+gearadmin --status
+```
+and look for `izd-gz` on the list of available worker functions.
+
 Depending on the final configuration, it may be necessary to install at least [version 1.11.0 of the "zip" extension](https://pecl.php.net/package-changelog.php?package=zip), in order to obtain ZIP64 support, to support large file sizes.
 
 ## Configuration
